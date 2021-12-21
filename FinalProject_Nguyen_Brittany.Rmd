@@ -1,0 +1,306 @@
+---
+title: "Final Project: Patterns of Global Life Expectancy and its Contributing Factors"
+author: "Brittany Nguyen (bhn4bf)"
+date: "Due Date: November 30th"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+  pdf_document:
+    toc: yes
+#output: slidy_presentation
+runtime: shiny
+---
+
+<style>
+h1.title {
+  font-size: 30px;
+}
+h1 {
+  font-size: 26px;
+}
+h2 {
+  font-size: 22px;
+}
+h3 { 
+  font-size: 18px;
+}
+
+</style>
+
+# Article
+- Include a link to access your article. 
+
+https://ourworldindata.org/life-expectancy#how-strong-is-the-link-between-healthcare-expenditure-and-life-expectancy
+
+- Link to the dataset:
+https://www.kaggle.com/kumarajarshi/life-expectancy-who 
+
+The chosen article comes from the "Our World in Data" website, and includes facts and figures regarding global life expectancy trends and contributing factors.  The article was chosen because of the depth of information it had regarding specific (country, gender, GDP, etc.) contributing factors towards the global increase in life expectancy over the past century, as well as for its detail in noting how life expectancy increases are a global and not country-wide trend.
+The article makes two major points. The first is that larger healthcare expenditure is correlated with higher life expectancy.  (Investigated by the variables "percentage.expenditure" and "Adult.Mortality" in the dataset used). 
+The second point is that life expectancy has increased in the past century around the world (to be investigated using the variable "Life.expectancy"). 
+Through the two plots employed in this project, I came to agree strongly with both of the points made in the article.
+
+# Data
+
+- Describe your dataset that is relevant, related to, and informative of the article.
+
+The dataset employed for this project combines both health data for 193 countries around the world (monitored and collected by the World Health Organization and Global Health Observatory) with economic data from the United Nations website.  The dataset itself comes from Kaggle at the link provided earlier in this document, and serves to illustrate trends about global life expectancy.
+The dataset spans the years from 2000-2015, to reflect the major improvements in healthcare worldwide in the past decade and the effects that this has had on mortality rates.  The dataset has 2938 rows and 22 columns.  The dataset's columns include Life Expectancy, Adult Mortality, Country, Year, and many other factors correlated with Life Expectancy (Healthcare Expenditure, GDP, Population, Percent of Population Vaccinated for Diseases, etc.)
+Several variables of interest were selected for analysis.  The "percentage.expenditure" variable is the expenditure on healtchare as a percent of GDP/capita.  The "Adult.Mortality" variable is the rate of mortality for both genders, defined as the likelihood of dying between the ages of 15-60, per 1000 people.   The "Life.Expectancy" variable is the age life expectancy estimate for a given country.
+
+# An Initial Look at the Dataset 
+- Print the first 6 rows using function `head()`.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(kableExtra)
+
+#reading in the data
+life_exp <- read.csv('Life Expectancy Data.csv')
+
+#first 6 rows of the data
+head(life_exp,6)
+
+```
+
+Note: One potential limitation of this dataset is that many countries do not have values for 2015 and only extend through 2014. Thus, the graphs made in this project concentrate on the years 2000-2014 only.
+
+```{r message=FALSE, warning=FALSE}
+#viewing table
+library(DT)
+DT::datatable(data=life_exp, options = list(scrollX = T))
+
+library(kableExtra)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+#kable table of summary statistics 
+DT::datatable(data=summary(life_exp), options = list(scrollX = T))
+
+```
+
+As demonstrated, the minimum life expectancy is approximately 36 years, the maximum is 89 years, and the mean is about 70 years.
+
+# Data Validation
+
+- Check the content of the attributes, traits, features, rows, and/or other properties specific to your dataset.
+
+   + Is the data type correct for this field?
+```{r message=FALSE, warning=FALSE}
+#1) Checking data types for variables of interest:
+
+str(life_exp) 
+```
+
+"Life.expectancy" is type num, "percentage.expenditure" is type num, and "Adult.Mortality" is type int because it contains all integer values of "rates" for adult mortality. Thus, the data types are correct for the variables of interest.
+
+   + Is the value within the valid range or part of a domain or enumerated list?
+
+All data ranges for the three variables of interest seem appropriate.  For example, percentage.expenditure has values around 70% of GDP per capita, and Life.expectancy as an age ranges from around 36 to 89 years.
+   
+   + Check for duplicates, for example of a unique key.
+```{r}
+#3) Checking for duplicates in the variables of interest:
+
+###unique(life_exp$Life.expectancy)
+###unique(life_exp$percentage.expenditure)
+###unique(life_exp$Adult.Mortality)
+
+```
+   
+It would be highly plausible and acceptable for there to be duplicate numeric values for the variables of interest. (ex: Two countries could have the same Life Expectancy in a given year, or two countries may have the same Adult Mortality for a given year). Additionally, each of the countries appears multiple times (14 or 15 times, approximately), once for each of the years analyzed from 2000-2015.
+
+   + Check for nulls. Are there mandatory values, or are null / empty values allowed? Are the null types consistent (NaN, infinity, empty strings, etc.)?
+
+- Tips: for duplicates, use function `unique()`. For missing values, use function `is.na()`. To delete all rows with a missing, use function `na.omit()`. Feel free to use other functions to check duplicates and missing values.
+
+```{r message=FALSE, warning=FALSE}
+#4) Checking for NA values (only type of missing value in this dataset):
+
+#dropping columns and re-saving onto the data frame
+life_exp<-na.omit(life_exp) #Original dataset has 2938 rows and 22 vars
+
+#subsetting to only rows (and all corresponding columns) where there are missing values
+life_exp[is.na(life_exp),] #(should return 0 rows if all missing values deleted!)
+
+
+```
+
+The only kind of missing value in the chosen dataset was NA, and thus these values were removed from the dataset.  A validation subset was used to ensure that there were no more missing values in the dataset following the use of na.omit().
+After deleting the missing values, the new dataset has only 1649 rows (still 22 variables/columns).
+
+  + Data Summary for Variables of Interest
+```{r message=FALSE, warning=FALSE}
+#Life Expectancy Summary Statistics
+summary(life_exp$Life.expectancy)
+```
+
+Following the deletion of NA values, the minimum age life expectancy is 44 years.
+
+```{r message=FALSE, warning=FALSE}
+#Percentage Expenditure of GDP per Capita Summary Statistics
+summary(life_exp$percentage.expenditure)
+```
+  
+
+```{r message=FALSE, warning=FALSE}
+#Adult Mortality Rates Summary Statistics
+summary(life_exp$Adult.Mortality)
+```
+
+# Plots 
+
+- You need to create at least one plot using `shiny`.
+
+## Scatter Plot of Percentage Expenditure on Healthcare versus Adult Mortality  
+
+```{r message=FALSE, warning=FALSE}
+library(shiny)
+library(ggplot2)
+
+#removing outliers by subsetting x-axis variable to <=7000 for percentage.expenditure
+life_exp_subset<-life_exp[life_exp$percentage.expenditure<=7000,]
+
+shinyApp(
+  ui = fluidPage(
+    selectInput("degree", label = "Degree:",
+              choices = list( "1" = 1, "2" = 2), 
+              selected = 1),
+    sliderInput("span", label = "Span:",
+              min=0.2, max=0.9, value=0.4),
+    plotOutput("plot")
+  ),
+  
+  server = function(input, output){
+    output$plot <- renderPlot({
+      ggplot(life_exp_subset, aes(x=percentage.expenditure, y=Adult.Mortality)) + geom_point() + geom_smooth(method="loess", formula=y~poly(x, degree=as.numeric(input$degree)), se=FALSE, span=input$span, color='orange') + theme_bw() + labs(x="Healthcare Expenditure (% of GDP per capita)", y="Adult Mortality Rates", title="Healthcare Expenditure versus Adult Mortality Rates")
+    })
+  },
+  
+  #changes the height of the plot in the knitted Shiny file:
+  options = list(height=700)
+)  
+```
+
+```{r message=FALSE, warning=FALSE}
+library(shiny)
+library(ggplot2)
+
+#removing outliers by subsetting x-axis variable to <=2000 for percentage.expenditure
+life_exp_subset1<-life_exp[life_exp$percentage.expenditure<=2000,]
+
+shinyApp(
+  ui = fluidPage(
+    selectInput("degree", label = "Degree:",
+              choices = list( "1" = 1, "2" = 2), 
+              selected = 1),
+    sliderInput("span", label = "Span:",
+              min=0.2, max=0.9, value=0.7),
+    plotOutput("plot")
+  ),
+  
+  server = function(input, output){
+    output$plot <- renderPlot({
+      ggplot(life_exp_subset1, aes(x=percentage.expenditure, y=Adult.Mortality)) + geom_point() + geom_smooth(method="loess", formula=y~poly(x, degree=as.numeric(input$degree)), se=FALSE, span=input$span, color='orange') + theme_bw() + labs(x="Healthcare Expenditure (% of GDP per capita)", y="Adult Mortality Rates", title="Healthcare Expenditure versus Adult Mortality Rates")
+    })
+  },
+  
+  #changes the height of the plot in the knitted Shiny file:
+  options = list(height=700)
+)  
+```
+
+One of the major points made in the article is that as healthcare expenditure per capita increases, so does the life expectancy.  Similarly, the above plot graphs the percentage expenditure of GDP per capita per country versus adult mortality rate. It was expected that life expectancy (the variable from the article) and adult mortality rate should have an inverse relationship for any given country.  Thus, instead of expecting to see a monotonic increasing pattern for the graph, I expected to see a monotonic decreasing trend between healthcare expenditure and adult mortality.  As healthcare expenditure increases, adult mortality should decrease. 
+
+First of all, the data was subsetted such that percentage expenditure less than or equal to 7000 was considered.  This way, the few outliers in the scatterplot above this value would not skew the loess regression smoother.  A secondary plot is shown where the data is subsetted to less than or equal to 2000 in order to capture a majority of the data points in lower ranges of percentage expenditure.
+What's more, both the span and degree factors were employed in the creation of the Shiny plot.  The span is the proportion of points employed.  As span increases, the loess curve becomes more smooth and does not overreact to individual outliers in the data.  The degree of the plot was also variable in the Shiny plot and adjusted the amount of variance and bias in the loess smoother; it refers to the shape of the smoother.  Only degrees of 1 and 2 were considered.  
+
+It is clear from adjusting the Shiny controls that the optimal span and degree combination for the 7000-and-under scatterplot is a span of 0.4 and a degree of 1.  A degree of 2 for the loess line would overfit the data and the line would be skewed to individual points, thus failing to capture the overall trend accurately.  As for the span, using about 40% of the data provides a loess line that is both smooth but which also runs through the data most authentically.  Particularly, it captures the left tail of the distribution better than higher values of the span which do not capture higher-extreme values on the y-axis.  For the same justifications for degree and span, a degree of 1 and span of about 0.7 fit the 2000-and-under based scatterplot.
+
+I agree strongly with the point made in the article.  As percentage expenditure on healthcare increases, life expectancy increases.  By the same token, as percentage expenditure on healthcare increases, adult mortality decreases.  
+It should also be noted that a large proportion of the data is clumped below a healthcare expenditure of 500% of GDP per capita, and is paired with high adult mortality.  This shows that many countries do not spend an exorbitant amount on healthcare, and appropriately see high levels of adult mortality rates.
+
+
+## Histogram of Life Expectancy Density (2000 to 2014)
+
+```{r message=FALSE, warning=FALSE}
+
+#subsetting to only 2000
+life_exp_2000<-life_exp[life_exp$Year==2000,]
+
+shinyApp(
+  ui = fluidPage(
+      sliderInput("breaks", label = "Number of bins:",
+              min = 40, max = 80, value = 70, step = 5),
+
+  selectInput("bw", label = "Bandwidth adjustment:",
+              choices = seq(0.2, 2, 0.2), selected = 1),
+
+    plotOutput("plot")
+  ),
+  
+  server = function(input, output){
+    output$plot <- renderPlot({
+        hist(life_exp_2000$Life.expectancy, probability = TRUE, breaks = input$breaks,
+       xlab = "Life Expectancy (Age in Years)", main = "Histogram of Density of Life Expectancy for 193 countries in 2000")
+
+  dens <- density(life_exp_2000$Life.expectancy, adjust = as.numeric(input$bw))
+  lines(dens, col = "purple")
+    })
+  },
+  #changes the height of the plot in the knitted Shiny file:
+  options = list(height=700)
+  
+)  
+
+```
+
+```{r message=FALSE, warning=FALSE}
+#subsetting to only 2014
+life_exp_2014<-life_exp[life_exp$Year==2014,]
+
+shinyApp(
+  ui = fluidPage(
+      sliderInput("breaks", label = "Number of bins:",
+              min = 40, max = 80, value = 70, step = 5),
+
+  selectInput("bw", label = "Bandwidth adjustment:",
+              choices = seq(0.2, 2, 0.2), selected = 1),
+    plotOutput("plot")
+  ),
+  
+  server = function(input, output){
+    output$plot <- renderPlot({
+        hist(life_exp_2014$Life.expectancy, probability = TRUE, breaks = input$breaks,
+       xlab = "Life Expectancy (Age in Years)", main = "Histogram of Density of Life Expectancy for 193 countries in 2014")
+
+  dens <- density(life_exp_2014$Life.expectancy, adjust = as.numeric(input$bw))
+  lines(dens, col = "purple")
+    })
+  },
+  #changes the height of the plot in the knitted Shiny file:
+  options = list(height=700)
+)  
+
+```
+
+The second point made in the article is with respect to how life expectancy has changed over the past century.  More specifically, the article states that global life expectancy has increased over the past century.  In the context of the data set, I decided to look at how the distribution of life expectancy has changed from 2000 to 2014.  
+
+The first plot is a histogram of the density of life expectancy (in years) in 2000 for all 193 countries in the dataset.  The graph is skewed left, with outliers around 47 years of age.  The peak of the graph is located at approximately 72 years of age.  One Shiny input employed is the number of bins.  No matter the number, the graph remains skewed left.  The bandwidth, similar to span, determines the smoothness of a curve based upon how much of the neighboring data points are employed.  A larger bandwidth results in a smoother curve, but tends to underfit the data.  A smaller bandwidth overfits the data, but reacts too strongly to outliers.
+
+The optimal number of bins was decided to be 40, as the smoother curve more authentically follows the data when less bins are presented (too many bins resulted in a rather "flat" curve).  The optimal bandwidth was decided to be 0.8.  While a bandwidth less than 0.8 captured the data well, the minor fluctuations presented in the curve are evidence of overfitting.  Thus, a bandwidth of 0.8 is optimal because it is both smooth and representative of dips and peaks in the distribution.
+
+The second plot is a similar histogram, displaying the density distribution of life expectancy (in years) in 2014.  The peak life expectancy is seen at approximately 74-75 years of age, with a lower-extreme outlier below 50 years and upper-extreme outliers around 90 years. Similarly, it was determined that a small number of bins (40 bins) was optimal for visualizing the density distribution. The skinnier but larger number of bins tended to have more spacing between them, and such gaps in the data made visualizing the overall trend more difficult.  The optimal bandwidth for this 2014 graph was determined to be 0.6.  This produced a smooth curve that also represented the peak life expectancy (approximately 74-75 years) accurately.  The smoother does not overfit or react too strongly to outlying observations.  Bandwidths above 0.6 did not capture the peak age well, while bandwidths below produced too many fluctuations in the curve.
+
+Thus, in observing the differences between the two histograms, I agree strongly with the point made in the article about how life expectancy has overall increased globally in the past few decades.  While the peak age life expectancy was about 72 years in 2000, it rose to 74-75 years in 2014.  This pattern is observed on a global scale, as the histograms take into account all 193 countries included in the dataset.
+
+Additionally, the ranges of the data values presented on the x-axis are shifted to higher values.  While the x-axis values for the 2000 plot extend from 45 through 80 years, the x-axis values for the 2014 plot extend from around 46 through 90 years.  This is additional evidence towards the claim made in the article.
+
+# Submission
+- You should upload your presentation files (Rmd file and your shiny-app URL) and dataset you used on the discussion board by the day before your presentation day. For example, if you're a presenter on Nov 23, upload your presentation files by 11:59 pm, Nov 22.  
+
+
